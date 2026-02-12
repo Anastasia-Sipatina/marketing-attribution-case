@@ -1,4 +1,4 @@
-# Marketing Attribution Case Studyъ
+# Marketing Attribution Case Study
 
 This repository demonstrates a marketing attribution pipeline based on user-level touchpoints and multi-touch attribution models.
 
