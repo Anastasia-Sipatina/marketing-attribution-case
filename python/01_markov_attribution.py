@@ -3,21 +3,28 @@
 import pandas as pd
 import ChannelAttribution
 
-# Expected input format:
-# conversion_path: "google > youtube > direct"
-# conversions: int
-# zeropath: int (count of non-converting paths)
+# Load grouped paths
+df = pd.read_csv("channel_paths_grouped.csv")
 
-df = pd.read_csv("channel_paths_grouped.csv")  # example export from BigQuery
-df["zeropath"] = df["zeropath"].fillna(0).astype(int)
-df["Conversions"] = df["conversions"].astype(int)
-df["Conversion_path"] = df["conversion_path"].astype(str)
+# Rename and clean columns
+df = df.rename(columns={
+    "conversion_path": "path",
+    "conversions": "conversions",
+    "zeropath": "null_conversions"
+})
+
+df["null_conversions"] = df["null_conversions"].fillna(0).astype(int)
+df["conversions"] = df["conversions"].astype(int)
+df["path"] = df["path"].astype(str)
+
+if df.empty:
+    raise ValueError("Input dataframe is empty.")
 
 result = ChannelAttribution.markov_model(
     df,
-    var_path="Conversion_path",
-    var_conv="Conversions",
-    var_null="zeropath",
+    var_path="path",
+    var_conv="conversions",
+    var_null="null_conversions",
     order=1,
     sep=">",
     ncore=1,
@@ -29,8 +36,16 @@ result = ChannelAttribution.markov_model(
     verbose=False,
 )
 
-attributed = result["result"].rename(columns={"total_conversions": "Attributed_conversions"})
+# Extract results
+attributed = result["result"].rename(
+    columns={"total_conversions": "Attributed_conversions"}
+)
+
 removal_effects = result["removal_effects"]
 
+print("Attributed conversions:")
 print(attributed.head(20))
+
+print("\nRemoval effects:")
 print(removal_effects.head(20))
+
